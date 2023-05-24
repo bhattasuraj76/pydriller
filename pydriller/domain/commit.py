@@ -31,6 +31,11 @@ from git import Diff, Git, NULL_TREE
 from git.objects import Commit as GitCommit
 from git.objects.base import IndexObject
 
+# Customized
+import javalang
+import re
+ 
+
 from pydriller.domain.developer import Developer
 
 logger = logging.getLogger(__name__)
@@ -168,6 +173,7 @@ class ModifiedFile:
         self._token_count = None
         self._function_list: List[Method] = []
         self._function_list_before: List[Method] = []
+
 
     def __hash__(self) -> int:
         """
@@ -448,6 +454,27 @@ class ModifiedFile:
 
         return list(methods_changed_new.union(methods_changed_old))
 
+    # Customized
+    @property
+    def testcases(self) -> List[str]:
+        """
+        Return the list of testcases (begin with test or annotated) in the current source code
+        
+        :return: list of testcases 
+        """
+        return self._compute_testcases(self.source_code)
+
+     # Customized
+    @property
+    def testcases_before(self) -> List[str]:
+        """
+        Return the list of testcases (begin with test or annotated) in the before source code
+
+        :return: list of testcases 
+        """
+        return self._compute_testcases(self.source_code_before)
+
+        
     @staticmethod
     def _risk_profile(
             methods: List[Method], dmm_prop: DMMProperty
@@ -512,6 +539,40 @@ class ModifiedFile:
 
             self._function_list_before = [Method(x) for x in anal.function_list]
 
+    # Customized
+    def _compute_testcases(self, code) -> List[str]:
+        """
+        Return the list of testcases (begin with test or annotated) in the before source code testcases using javaparser
+        :param code: file code content
+        """
+        if not self.language_supported:
+            return
+
+        tree = javalang.parse.parse(code)
+        methods =  tree.filter(javalang.tree.MethodDeclaration)
+
+        def filter_testcases(method):
+            path, node = method
+            if 'public' not in node.modifiers:
+                return False
+            
+            testcase_name = re.search("test([a-zA-Z0-9_]+)", node.name)
+            if testcase_name:
+                return True
+            else:
+                for each in node.annotations:
+                    if each.name == "Test":
+                        return True
+                    
+            return False
+                            
+        testcases_methods = filter(filter_testcases, methods)  
+
+        testcases = []
+        for path, node in testcases_methods:
+            testcases.append(node.name)
+            
+        return testcases
     def _get_decoded_content(self, content: bytes) -> Optional[str]:
         try:
             return content.decode("utf-8", "ignore")
