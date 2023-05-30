@@ -551,6 +551,9 @@ class ModifiedFile:
         if not code:
             return
         
+        # Fix for commons-lang
+        code = code.replace("package org.apache.commons.lang.enum;", "// package org.apache.commons.lang.enum;")
+        
         tree = javalang.parse.parse(code)
         methods =  tree.filter(javalang.tree.MethodDeclaration)
 
