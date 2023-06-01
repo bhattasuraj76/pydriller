@@ -474,7 +474,23 @@ class ModifiedFile:
         """
         return self._compute_testcases(self.source_code_before)
 
-        
+            # Customized
+    @property
+    def false_testcases(self) -> List[str]:
+        """
+        Return the list of false testcases (are not annotated with '@Test', or have 'test' prefix or 'public' access modifiers) in the current source code
+        :return: list of false testcases 
+        """
+        return self._compute_false_testcases(self.source_code)
+
+     # Customized
+    @property
+    def false_testcases_before(self) -> List[str]:
+        """
+        Return the list of false testcases (are not annotated with '@Test', or have 'test' prefix or 'public' access modifiers) in the before source code
+        :return: list of false testcases 
+        """
+        return self._compute_false_testcases(self.source_code_before)
     @staticmethod
     def _risk_profile(
             methods: List[Method], dmm_prop: DMMProperty
@@ -551,34 +567,75 @@ class ModifiedFile:
         if not code:
             return
         
-        # Fix for commons-lang
-        code = code.replace("package org.apache.commons.lang.enum;", "// package org.apache.commons.lang.enum;")
-        
-        tree = javalang.parse.parse(code)
-        methods =  tree.filter(javalang.tree.MethodDeclaration)
+        try:
+            tree = javalang.parse.parse(code)
+            methods =  tree.filter(javalang.tree.MethodDeclaration)
 
-        def filter_testcases(method):
-            path, node = method
-            if 'public' not in node.modifiers:
+            def filter_testcases(method):
+                path, node = method
+                if 'public' not in node.modifiers:
+                    return False
+                
+                testcase_name = re.search("test([a-zA-Z0-9_]+)", node.name)
+                if testcase_name:
+                    return True
+                else:
+                    for each in node.annotations:
+                        if each.name == "Test":
+                            return True
+                        
                 return False
-            
-            testcase_name = re.search("test([a-zA-Z0-9_]+)", node.name)
-            if testcase_name:
-                return True
-            else:
-                for each in node.annotations:
-                    if each.name == "Test":
-                        return True
-                    
-            return False
-                            
-        testcases_methods = filter(filter_testcases, methods)  
+                                
+            testcases_methods = filter(filter_testcases, methods)  
 
-        testcases = []
-        for path, node in testcases_methods:
-            testcases.append(node.name)
-            
-        return testcases
+            testcases = []
+            for path, node in testcases_methods:
+                testcases.append(node.name)
+                
+            return testcases
+        except: 
+            return []
+   
+    # Customized
+    def _compute_false_testcases(self, code) -> List[str]:
+        """
+        Return the list of false testcases (not annotated with '@Test' or have 'test' prefix or have 'public' access modifier)
+        :param code: file code content
+        """
+        if not self.language_supported:
+            return
+
+        if not code:
+            return
+        
+        try:
+            tree = javalang.parse.parse(code)
+            methods =  tree.filter(javalang.tree.MethodDeclaration)
+
+            def filter_testcases(method):
+                path, node = method
+                if 'public' not in node.modifiers:
+                    return True
+                
+                
+                testcase_name = re.search("test([a-zA-Z0-9_]+)", node.name)
+                if not testcase_name:
+                    for each in node.annotations:
+                        if each.name != "Test":
+                            return True
+                        
+                return False
+                                
+            false_testcases_methods = filter(filter_testcases, methods)  
+
+            false_testcases = []
+            for path, node in false_testcases_methods:
+                false_testcases.append(node.name)
+                
+            return false_testcases
+        except:
+            return []
+        
     def _get_decoded_content(self, content: bytes) -> Optional[str]:
         try:
             return content.decode("utf-8", "ignore")
