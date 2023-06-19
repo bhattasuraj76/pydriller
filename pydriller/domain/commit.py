@@ -456,7 +456,7 @@ class ModifiedFile:
 
     # Customized
     @property
-    def testcases(self) -> List[str]:
+    def testcases(self) -> Optional[List[str]]:
         """
         Return the list of testcases (begin with test or annotated) in the current source code
         
@@ -466,7 +466,7 @@ class ModifiedFile:
 
      # Customized
     @property
-    def testcases_before(self) -> List[str]:
+    def testcases_before(self) -> Optional[List[str]]:
         """
         Return the list of testcases (begin with test or annotated) in the before source code
 
@@ -476,7 +476,7 @@ class ModifiedFile:
 
             # Customized
     @property
-    def false_testcases(self) -> List[str]:
+    def false_testcases(self) -> Optional[List[str]]:
         """
         Return the list of false testcases (are not annotated with '@Test', or have 'test' prefix or 'public' access modifiers) in the current source code
         :return: list of false testcases 
@@ -485,7 +485,7 @@ class ModifiedFile:
 
      # Customized
     @property
-    def false_testcases_before(self) -> List[str]:
+    def false_testcases_before(self) -> Optional[List[str]]:
         """
         Return the list of false testcases (are not annotated with '@Test', or have 'test' prefix or 'public' access modifiers) in the before source code
         :return: list of false testcases 
@@ -556,7 +556,7 @@ class ModifiedFile:
             self._function_list_before = [Method(x) for x in anal.function_list]
 
     # Customized
-    def _compute_testcases(self, code) -> List[str]:
+    def _compute_testcases(self, code) -> Optional[List[str]]:
         """
         Return the list of testcases (begin with test or annotated) in the before source code testcases using javaparser
         :param code: file code content
@@ -594,10 +594,10 @@ class ModifiedFile:
                 
             return testcases
         except: 
-            return []
+            return None
    
     # Customized
-    def _compute_false_testcases(self, code) -> List[str]:
+    def _compute_false_testcases(self, code) -> Optional[List[str]]:
         """
         Return the list of false testcases (not annotated with '@Test' or have 'test' prefix or have 'public' access modifier)
         :param code: file code content
@@ -634,7 +634,7 @@ class ModifiedFile:
                 
             return false_testcases
         except:
-            return []
+            return None
         
     def _get_decoded_content(self, content: bytes) -> Optional[str]:
         try:
