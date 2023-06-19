@@ -576,6 +576,9 @@ class ModifiedFile:
                 if 'public' not in node.modifiers:
                     return False
                 
+                if node.return_type is not None:
+                    return False
+                
                 testcase_name = re.search("test([a-zA-Z0-9_]+)", node.name)
                 if testcase_name:
                     return True
