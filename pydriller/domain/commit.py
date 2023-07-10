@@ -456,6 +456,28 @@ class ModifiedFile:
 
     # Customized
     @property
+    
+    def jp_methods(self) -> Optional[List[str]]:
+        """
+        Return the list of testcases (begin with test or annotated) in the current source code
+        
+        :return: list of testcases 
+        """
+        return self._compute_jp_methods(self.source_code)
+
+     # Customized
+    @property
+    def jp_methods_before(self) -> Optional[List[str]]:
+        """
+        Return the list of testcases (begin with test or annotated) in the before source code
+
+        :return: list of testcases 
+        """
+        return self._compute_jp_methods(self.source_code_before)
+
+            # Customized
+   
+    @property
     def testcases(self) -> Optional[List[str]]:
         """
         Return the list of testcases (begin with test or annotated) in the current source code
@@ -556,6 +578,29 @@ class ModifiedFile:
             self._function_list_before = [Method(x) for x in anal.function_list]
 
     # Customized
+    def _compute_jp_methods(self, code) -> Optional[List[str]]:
+        """
+        Return the list of methods using javaparser
+        :param code: file code content
+        """
+        if not self.language_supported:
+            return
+
+        if not code:
+            return
+        
+        try:
+            tree = javalang.parse.parse(code)
+            methods =  tree.filter(javalang.tree.MethodDeclaration)
+
+            jp_methods = []
+            for path, node in methods:
+                jp_methods.append(node.name)
+                
+            return jp_methods
+        except: 
+            return None
+   
     def _compute_testcases(self, code) -> Optional[List[str]]:
         """
         Return the list of testcases (begin with test or annotated) in the before source code testcases using javaparser
