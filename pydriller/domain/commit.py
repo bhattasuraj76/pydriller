@@ -600,6 +600,31 @@ class ModifiedFile:
             return None
    
     # Customized
+    def compute_referenced_functions_in_testcase(self, file, testcase) -> Optional[List[str]]:
+        """
+        Return the list of functions (referenced) in testcase defination using javaparser
+        :param code: file code content
+        """
+        if not self.language_supported:
+            return
+
+        if not self.source_code_before:
+            return
+        
+        try:
+            tree = javalang.parse.parse(self.source_code_before)
+            methods =  tree.filter(javalang.tree.MethodDeclaration)
+            referenced_methods = []
+            for path, methondNode in methods:
+                if methondNode.name == testcase:
+                    methodInvokedNodes = methondNode.filter(javalang.tree.MethodInvocation)
+                    for each in methodInvokedNodes:
+                        referenced_methods.append(each[1].name)
+            return referenced_methods
+        except: 
+            return None
+   
+    # Customized
     def _compute_false_testcases(self, code) -> Optional[List[str]]:
         """
         Return the list of false testcases (not annotated with '@Test' or have 'test' prefix or have 'public' access modifier)
