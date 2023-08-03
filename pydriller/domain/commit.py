@@ -665,7 +665,7 @@ class ModifiedFile:
                     methodInvokedNodes = methondNode.filter(javalang.tree.MethodInvocation)
                     for each in methodInvokedNodes:
                         referenced_methods.append(each[1].member)
-            return referenced_methods
+            return list(set(referenced_methods))
         except: 
             return None
    
