@@ -660,14 +660,15 @@ class ModifiedFile:
             tree = javalang.parse.parse(self.source_code_before)
             methods =  tree.filter(javalang.tree.MethodDeclaration)
             referenced_methods = []
+            return len(methods)
             for path, methondNode in methods:
                 if methondNode.name == testcase:
                     methodInvokedNodes = methondNode.filter(javalang.tree.MethodInvocation)
                     for each in methodInvokedNodes:
                         referenced_methods.append(each[1].name)
             return referenced_methods
-        except: 
-            return None
+        except Exception as err : 
+            return err
    
     # Customized
     def _compute_false_testcases(self, code) -> Optional[List[str]]:
