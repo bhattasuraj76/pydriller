@@ -657,7 +657,28 @@ class ModifiedFile:
             return
         
         try:
-            tree = javalang.parse.parse(self.source_code_before)
+            # fix commons-lang parsing error
+            all_of_it = self.source_code_before.replace("package org.apache.commons.lang.enum;", "// package org.apache.commons.lang.enum;")
+            # fix commons-math parsing error
+            # to eliminate => array1.getArray()[0]
+            all_of_it = re.sub(r"getArray\(\)\[\d+\](.)*\)", "getArray()))", all_of_it)
+            all_of_it = re.sub(r"getArray\(\)\[\d+\](.)*\;", "getArray();", all_of_it)
+            # to eliminate => scalar1.setValue(00.0)
+            all_of_it = re.sub(r"scalar[\d+]\.setValue\((.*)\)*\;", "", all_of_it)
+            #pmd 
+            all_of_it = all_of_it.replace("JavaEscapeTranslator(TextDocument.readOnlyString(Chars.wrap(input), LanguageRegistry.getDefaultLanguage().getDefaultVersion());",
+            "JavaEscapeTranslator(TextDocument.readOnlyString(Chars.wrap(input), LanguageRegistry.getDefaultLanguage().getDefaultVersion()));")
+            #cts
+            # to eliminate => Intent[]::new
+            all_of_it = all_of_it.replace("Intent[]::new", "")
+            # to eliminate => String[]::new
+            all_of_it = all_of_it.replace("String[]::new", "")
+            # to eliminate => Predicate[]::new
+            all_of_it = all_of_it.replace("Predicate[]::new", "null")
+            # to eliminate => import java.util.UUID;;
+            all_of_it = re.sub(r"import(.)*\;\;", "", all_of_it)
+                        
+            tree = javalang.parse.parse(all_of_it)
             methods =  tree.filter(javalang.tree.MethodDeclaration)
             referenced_methods = []
             for path, methondNode in methods:
