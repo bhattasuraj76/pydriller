@@ -685,13 +685,20 @@ class ModifiedFile:
             all_of_it = self.clean_before_javaparsed(self.source_code_before)
             tree = javalang.parse.parse(all_of_it)
             methods =  tree.filter(javalang.tree.MethodDeclaration)
-            referenced_methods = []
+            referenced_methods_constructors = []
             for path, methondNode in methods:
                 if methondNode.name == testcase:
+                    # Invoked methods
                     methodInvokedNodes = methondNode.filter(javalang.tree.MethodInvocation)
                     for each in methodInvokedNodes:
-                        referenced_methods.append(each[1].member)
-            return list(set(referenced_methods))
+                        referenced_methods_constructors.append(each[1].member)
+                        
+                    # Invoked constructors
+                    constructorsNodes = methondNode.filter(javalang.tree.ClassCreator)
+                    for each in constructorsNodes:
+                        referenced_methods_constructors.append(each[1].type.name)
+                    
+            return list(set(referenced_methods_constructors))
         except Exception as e: 
             print(e)
             return None
